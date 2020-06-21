@@ -68,7 +68,10 @@ const formatNumber = (number) => `0${number}`.slice(-2);
 const getRemaining = (time) => {
   const minutes = Math.floor(time / 60);
   const seconds = time - minutes * 60;
-  return { minutes: formatNumber(minutes), seconds: formatNumber(seconds) };
+  return {
+    minutes: formatNumber(minutes),
+    seconds: formatNumber(seconds),
+  };
 };
 
 const createArray = (length) => {
@@ -84,12 +87,14 @@ const AVAILABLE_SECONDS = createArray(60);
 
 export default class App extends React.Component {
   state = {
-    remainingSeconds: 5,
+    remainingTime: 5000,
     isRunning: false,
+    selectedMinutes: "0",
+    selectedSeconds: "5",
   };
 
   componentDidUpdate(prevProp, prevState) {
-    if (this.state.remainingSeconds === 0 && prevState.remainingSeconds !== 0) {
+    if (this.state.remainingTime === 0 && prevState.remainingTime !== 0) {
       this.stop();
     }
   }
@@ -101,9 +106,18 @@ export default class App extends React.Component {
   }
 
   start = () => {
+    this.setState((state) => ({
+      remainingTime:
+        parseInt(state.selectedMinutes, 10) * 60 +
+        parseInt(state.selectedSeconds, 10),
+      isRunning: true,
+    }));
+
+    console.log(this.state.remainingTime);
+
     this.interval = setInterval(() => {
       this.setState((state) => ({
-        remainingSeconds: state.remainingSeconds - 1,
+        remainingTime: state.remainingTime - 1,
         isRunning: true,
       }));
     }, 1000);
@@ -112,7 +126,12 @@ export default class App extends React.Component {
   stop = () => {
     clearInterval(this.interval);
     this.interval = null;
-    this.setState({ remainingSeconds: 5, isRunning: false });
+    this.setState({
+      remainingTime: 5,
+      isRunning: false,
+      selectedMinutes: 0,
+      selectedSeconds: 0,
+    });
   };
 
   renderPickers = () => {
@@ -121,9 +140,9 @@ export default class App extends React.Component {
         <Picker
           style={styles.picker}
           itemStyle={styles.pickerItem}
-          selectedValue="5"
+          selectedValue={this.state.selectedMinutes}
           onValueChange={(itemValue) => {
-            //update State
+            this.setState({ selectedMinutes: itemValue });
           }}
           mode="dropdown"
         >
@@ -135,9 +154,9 @@ export default class App extends React.Component {
         <Picker
           style={styles.picker}
           itemStyle={styles.pickerItem}
-          selectedValue="5"
+          selectedValue={this.state.selectedSeconds}
           onValueChange={(itemValue) => {
-            //update State
+            this.setState({ selectedSeconds: itemValue });
           }}
           mode="dropdown"
         >
@@ -151,7 +170,7 @@ export default class App extends React.Component {
   };
 
   render() {
-    const { minutes, seconds } = getRemaining(this.state.remainingSeconds);
+    const { minutes, seconds } = getRemaining(this.state.remainingTime);
     return (
       <View style={styles.container}>
         <StatusBar barStyle="light-content" />
