@@ -8,7 +8,9 @@ import {
   Dimensions,
   Picker,
   Platform,
+  ToastAndroid,
 } from "react-native";
+import { Audio } from "expo-av";
 
 const screen = Dimensions.get("window");
 
@@ -82,19 +84,35 @@ const createArray = (length) => {
   return arr;
 };
 
+const Toast = (props) => {
+  if (props.visible) {
+    ToastAndroid.showWithGravityAndOffset(
+      props.message,
+      ToastAndroid.LONG,
+      ToastAndroid.BOTTOM,
+      25,
+      50
+    );
+    return null;
+  }
+  return null;
+};
+
 const AVAILABLE_MINUTES = createArray(10);
 const AVAILABLE_SECONDS = createArray(60);
 
 export default class App extends React.Component {
   state = {
-    remainingTime: 5000,
+    remainingTime: 5,
     isRunning: false,
     selectedMinutes: "0",
-    selectedSeconds: "5",
+    selectedSeconds: "0",
+    visible: false,
   };
 
   componentDidUpdate(prevProp, prevState) {
     if (this.state.remainingTime === 0 && prevState.remainingTime !== 0) {
+      this.playSound();
       this.stop();
     }
   }
@@ -104,6 +122,34 @@ export default class App extends React.Component {
       clearInterval(this.interval);
     }
   }
+
+  handleButtonPress = () => {
+    this.setState(
+      {
+        visible: true,
+      },
+      () => {
+        this.hideToast();
+      }
+    );
+  };
+
+  hideToast = () => {
+    this.setState({
+      visible: false,
+    });
+  };
+
+  playSound = async () => {
+    try {
+      const soundObject = new Audio.Sound();
+      await soundObject.loadAsync(require("../assets/sounds/timesup.mp3"));
+      await soundObject.playAsync();
+      // Your sound is playing!
+    } catch (error) {
+      // An error occurred!
+    }
+  };
 
   start = () => {
     this.setState((state) => ({
@@ -132,6 +178,7 @@ export default class App extends React.Component {
       selectedMinutes: 0,
       selectedSeconds: 0,
     });
+    this.handleButtonPress();
   };
 
   renderPickers = () => {
@@ -191,6 +238,10 @@ export default class App extends React.Component {
             <Text style={styles.buttonText}>Start</Text>
           </TouchableOpacity>
         )}
+        <Toast
+          visible={this.state.visible}
+          message="Tone Will off in 7 seconds!"
+        />
       </View>
     );
   }
